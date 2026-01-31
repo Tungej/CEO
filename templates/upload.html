@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="header">
+    <div>
+        <h1>Data Upload Portal</h1>
+        <span style="color: var(--accent);">
+            Reporting Date: {{ date.strftime('%A, %d %B %Y') }}
+        </span>
+        <br>
+        <span style="color: var(--text-secondary); font-size: 0.8em;">
+            (Role: {{ role }})
+        </span>
+    </div>
+    <div>
+        <a href="{{ url_for('dashboard') }}" class="nav-link">View Dashboard</a>
+        <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
+    </div>
+</div>
+
+<form method="POST">
+    
+    <!-- 1. BANK BALANCE UPLOADER -->
+    {% if role == 'uploader_balance' %}
+    <h2>Daily Bank Balances</h2>
+    <div class="grid">
+        {% set banks = ['CBZ Bank', 'Ecobank', 'Stanbic Bank', 'Nedbank'] %}
+        {% for bank in banks %}
+        <div class="card">
+            <h3>{{ bank }}</h3>
+            <div style="margin-top: 10px;">
+                <label>USD Balance</label>
+                <input type="number" step="0.01" name="{{ bank }}_usd" placeholder="$ 0.00" required>
+            </div>
+            <div>
+                <label>ZiG Balance</label>
+                <input type="number" step="0.01" name="{{ bank }}_zig" placeholder="Z$ 0" required>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 2. INTEREST UPLOADER -->
+    {% elif role == 'uploader_interest' %}
+    <div class="grid">
+        <div class="card">
+            <h3>Monthly Bank Interest</h3>
+            <label>Interest Paid ($)</label>
+            <input type="number" step="0.01" name="int_paid" required>
+            
+            <label>Interest Due ($)</label>
+            <input type="number" step="0.01" name="int_due" required>
+        </div>
+    </div>
+
+    <!-- 3. PAYABLES UPLOADER -->
+    {% elif role == 'uploader_payables' %}
+    <div class="grid">
+        <div class="card">
+            <h3>Weekly Account Payables</h3>
+            <label>Creditors ($)</label>
+            <input type="number" step="0.01" name="pay_cred" required>
+            
+            <label>Creditors Project ($)</label>
+            <input type="number" step="0.01" name="pay_proj" required>
+        </div>
+    </div>
+
+    <!-- 4. RECEIVABLES UPLOADER -->
+    {% elif role == 'uploader_receivables' %}
+    <div class="grid">
+        <div class="card">
+            <h3>Weekly Account Receivables</h3>
+            <label>Total Receivables ($)</label>
+            <input type="number" step="0.01" name="rec_total" required>
+        </div>
+    </div>
+
+    <!-- 5. SPONGE IRON UPLOADER -->
+    {% elif role == 'uploader_sponge' %}
+    <div class="grid">
+        <div class="card">
+            <h3>Sponge Iron Production</h3>
+            <label>Quantity Produced (Tns)</label>
+            <input type="number" step="0.001" name="sponge_prod" required>
+            
+            <label>Quantity Lost (Tns)</label>
+            <input type="number" step="0.001" name="sponge_lost" required>
+        </div>
+    </div>
+
+    <!-- 6. SALES UPLOADER (New Fields) -->
+    {% elif role == 'uploader_sales' %}
+    <div class="grid">
+        <!-- Products Column -->
+        <div class="card">
+            <h3>Product Sales</h3>
+            
+            <label>Angles (Tns)</label>
+            <input type="number" step="0.001" name="angles" required>
+            
+            <label>Flats (Tns)</label>
+            <input type="number" step="0.001" name="flats" required>
+            
+            <label>Window Sections (Tns)</label>
+            <input type="number" step="0.001" name="window" required>
+            
+            <label>Fencing Standard (Tns)</label>
+            <input type="number" step="0.001" name="fencing" required>
+            
+            <label>Channel Iron (Tns)</label>
+            <input type="number" step="0.001" name="channel" required>
+
+            <label>Other Sections (Tns)</label>
+            <input type="number" step="0.001" name="other" required>
+        </div>
+
+        <!-- Branches Column -->
+        <div class="card">
+            <h3>Branch Sales</h3>
+            <label>Redcliff (Tns)</label>
+            <input type="number" step="0.001" name="redcliff" required>
+            <label>Harare (Tns)</label>
+            <input type="number" step="0.001" name="harare" required>
+            <label>Mutare (Tns)</label>
+            <input type="number" step="0.001" name="mutare" required>
+            <label>Bulawayo (Tns)</label>
+            <input type="number" step="0.001" name="bulawayo" required>
+            <label>Chiredzi (Tns)</label>
+            <input type="number" step="0.001" name="chiredzi" required>
+        </div>
+    </div>
+
+    <!-- 7. SCRAP UPLOADER -->
+    {% elif role == 'uploader_scrap' %}
+    <div class="grid">
+        <div class="card">
+            <h3>Scrap Purchase KPIs</h3>
+            <label>Supplied Scrap (Tns)</label>
+            <input type="number" step="0.001" name="supplied" required>
+            
+            <label>Total Scrap Purchased (Tns)</label>
+            <input type="number" step="0.001" name="total" required>
+        </div>
+    </div>
+
+    <!-- 8. PLANT MANAGER (Consolidated: Production, Power, Gas) -->
+    {% elif role == 'uploader_plant' %}
+    
+    <!-- Section 1: Production -->
+    <h2 style="border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 20px;">1. Production</h2>
+    <div class="grid">
+        <div class="card">
+            <h3>Billets (Cumulative)</h3>
+            <label>Unit I (Tns)</label>
+            <input type="number" step="0.001" name="unit1" required>
+            <label>Unit II (Tns)</label>
+            <input type="number" step="0.001" name="unit2" required>
+        </div>
+        <div class="card">
+            <h3>Rolling</h3>
+            <label>Non-TMT / HSD (Tns)</label>
+            <input type="number" step="0.001" name="non_tmt" required>
+            <label>TMT / Rebar (Tns)</label>
+            <input type="number" step="0.001" name="tmt" required>
+        </div>
+    </div>
+
+    <!-- Section 2: Power -->
+    <h2 style="border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 20px; margin-top: 30px;">2. Power Outages</h2>
+    <div class="grid">
+        <div class="card">
+            <h3>Unit I Power Cut</h3>
+            <div style="display: flex; gap: 10px;">
+                <div style="flex:1"><label>Hours</label><input type="number" name="u1_h" placeholder="0" required></div>
+                <div style="flex:1"><label>Minutes</label><input type="number" name="u1_m" placeholder="0" max="59" required></div>
+            </div>
+        </div>
+        <div class="card">
+            <h3>Unit II Power Cut</h3>
+            <div style="display: flex; gap: 10px;">
+                <div style="flex:1"><label>Hours</label><input type="number" name="u2_h" placeholder="0" required></div>
+                <div style="flex:1"><label>Minutes</label><input type="number" name="u2_m" placeholder="0" max="59" required></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 3: Industrial Gas -->
+    <h2 style="border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 20px; margin-top: 30px;">3. Gas Plant</h2>
+    <div class="grid">
+        <div class="card">
+            <h3>Industrial Gases</h3>
+            <label>Total Cylinders</label>
+            <input type="number" step="1" name="ind_gas" required>
+        </div>
+    </div>
+    
+    {% endif %}
+
+    <div style="margin-top: 30px;">
+        <button type="submit" class="btn">Save Data</button>
+    </div>
+</form>
+{% endblock %}

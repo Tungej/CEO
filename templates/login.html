@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="max-width: 400px; margin: 100px auto; text-align: center;">
+    <h2>KPI Portal Login</h2>
+    <form method="POST" class="card">
+        <div style="text-align: left; margin-bottom: 15px;">
+            <label>Username</label>
+            <input type="text" name="username" required>
+        </div>
+        <div style="text-align: left; margin-bottom: 15px;">
+            <label>Password</label>
+            <input type="password" name="password" required>
+        </div>
+        <button type="submit" class="btn" style="width: 100%">Login</button>
+    </form>
+    <p style="margin-top:20px; color: #666;">
+        Viewer: viewer / view123<br>
+        Uploader: uploader / upload123
+    </p>
+</div>
+{% endblock %}

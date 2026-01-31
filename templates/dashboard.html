@@ -1,0 +1,435 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="header">
+    <div style="display: flex; align-items: center;">
+        <!-- 1. COMPANY LOGO HERE -->
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Company Logo" class="header-logo">
+        
+        <div>
+            <h1 style="margin: 0; line-height: 1;">Operations Dashboard</h1>
+            <span style="color: var(--text-secondary); font-size: 0.9em;">{{ date.strftime('%A, %B %d, %Y') }}</span>
+        </div>
+    </div>
+    <div>
+        <span class="status-badge">● Live</span>
+        <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
+    </div>
+</div>
+
+<!-- ==========================
+     MAIN SECTION: ACCOUNTS KPIs
+     ========================== -->
+<div style="margin-top: 30px;">
+    <!-- Main Section Header -->
+    <div style="display: flex; align-items: baseline; margin-bottom: 25px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
+        <h2 style="margin: 0;">Accounts KPIs</h2>
+        <span style="margin-left: 15px; color: var(--text-secondary); font-size: 0.9em;">Daily / Weekly / Monthly</span>
+    </div>
+
+    <!-- SUB-SECTION 1: DAILY BANK BALANCES -->
+    <h3 style="color: var(--accent); font-size: 1.1em; margin-bottom: 15px;">Daily Bank Balance</h3>
+    <div class="grid" style="margin-bottom: 40px;">
+        {% for bank in balances %}
+        <div class="card">
+            <h3>{{ bank.name }}</h3>
+            <div class="big-number">${{ "{:,.2f}".format(bank.usd) }}</div>
+            <div class="sub-info">
+                <span>ZiG Balance</span>
+                <span style="color: white;">Z${{ "{:,.2f}".format(bank.zig) }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- SUB-SECTION 2: FINANCIAL POSITION (Interest, Payables, Receivables) -->
+    <h3 style="color: var(--accent); font-size: 1.1em; margin-bottom: 15px;">Financial Position</h3>
+    <div class="grid">
+        
+        <!-- Interest Card -->
+        <div class="card">
+            <div style="display:flex; justify-content:space-between;">
+                <h3>Monthly Bank Interest</h3>
+                <span style="font-size: 1.2em;">🏦</span>
+            </div>
+            <div class="big-number">${{ "{:,.0f}".format(interest.total) }}</div>
+            <div class="sub-info">
+                <span>Interest Paid</span>
+                <span style="color: white;">${{ "{:,.0f}".format(interest.paid) }}</span>
+            </div>
+            <div class="sub-info" style="border:none; padding-top:5px; margin-top:0;">
+                <span>Interest Due</span>
+                <span style="color: white;">${{ "{:,.0f}".format(interest.due) }}</span>
+            </div>
+        </div>
+
+        <!-- Payables Card -->
+        <div class="card">
+            <div style="display:flex; justify-content:space-between;">
+                <h3>Weekly Account Payables</h3>
+                <span style="font-size: 1.2em;">📉</span>
+            </div>
+            <div class="big-number">${{ "{:,.0f}".format(payables.total) }}</div>
+            <div class="sub-info">
+                <span>Creditors</span>
+                <span style="color: white;">${{ "{:,.0f}".format(payables.creditors) }}</span>
+            </div>
+            <div class="sub-info" style="border:none; padding-top:5px; margin-top:0;">
+                <span>Creditors Project</span>
+                <span style="color: white;">${{ "{:,.0f}".format(payables.project) }}</span>
+            </div>
+        </div>
+
+        <!-- Receivables Card -->
+        <div class="card">
+            <div style="display:flex; justify-content:space-between;">
+                <h3>Weekly Account Receivables</h3>
+                <span style="font-size: 1.2em;">📈</span>
+            </div>
+            <div class="big-number">${{ "{:,.0f}".format(receivables.total) }}</div>
+            <div class="sub-info">
+                <span>Total Outstanding</span>
+                <span style="color: white;">${{ "{:,.0f}".format(receivables.total) }}</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ==========================
+     MAIN SECTION: PRODUCTION KPIs
+     ========================== -->
+<div style="margin-top: 50px;">
+    <!-- Main Section Header -->
+    <div style="display: flex; align-items: baseline; margin-bottom: 25px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
+        <h2 style="margin: 0;">Production KPIs</h2>
+        <span style="margin-left: 15px; color: var(--text-secondary); font-size: 0.9em;">Billets & Rolling</span>
+    </div>
+
+    <!-- ROW 1: BILLETS & ROLLING -->
+    <div class="grid">
+        <!-- Unit I -->
+        <div class="card">
+            <h3 style="color: var(--text-secondary);">Unit I (Cumulative)</h3>
+            <div class="big-number">
+                {{ "{:,.3f}".format(prod_main.unit_1_cumulative) if prod_main else "0.000" }} 
+                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
+            </div>
+        </div>
+
+        <!-- Unit II -->
+        <div class="card">
+            <h3 style="color: var(--text-secondary);">Unit II (Cumulative)</h3>
+            <div class="big-number">
+                {{ "{:,.3f}".format(prod_main.unit_2_cumulative) if prod_main else "0.000" }} 
+                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
+            </div>
+        </div>
+
+        <!-- Rolling 1 -->
+        <div class="card">
+            <h3 style="color: var(--text-secondary);">Non-TMT / HSD Production</h3>
+            <div class="big-number">
+                {{ "{:,.3f}".format(prod_main.rolling_non_tmt) if prod_main else "0.000" }} 
+                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
+            </div>
+        </div>
+
+        <!-- Rolling 2 -->
+        <div class="card">
+            <h3 style="color: var(--text-secondary);">TMT / Rebar Production</h3>
+            <div class="big-number">
+                {{ "{:,.3f}".format(prod_main.rolling_tmt) if prod_main else "0.000" }} 
+                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ROW 2: TOTAL BILLETS (Full Width or Split) -->
+    <div class="grid" style="margin-top: 20px;">
+        <div class="card" style="border-left: 4px solid var(--accent);">
+            <div style="display:flex; justify-content:space-between;">
+                <h3>Total Billets Produced</h3>
+                <span>🏭</span>
+            </div>
+            <div class="big-number">
+                {{ "{:,.3f}".format(total_billets) }} 
+                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ROW 3: SPONGE IRON -->
+    <h3 style="margin-top: 40px; color: var(--text-secondary);">Sponge Iron Production</h3>
+    <div class="grid">
+        <div class="card">
+            <h3>Sponge Iron Produced</h3>
+            <div class="big-number">
+                {{ "{:,.3f}".format(prod_sponge.produced_tns) if prod_sponge else "0.000" }} 
+                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
+            </div>
+        </div>
+        <div class="card">
+            <h3>Sponge Iron Lost</h3>
+            <div class="big-number" style="color: #ef4444;"> <!-- Red color for loss -->
+                {{ "{:,.3f}".format(prod_sponge.lost_tns) if prod_sponge else "0.000" }} 
+                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- ==========================
+     MAIN SECTION: SALES KPIs
+     ========================== -->
+<div style="margin-top: 50px;">
+    <div style="display: flex; align-items: baseline; margin-bottom: 25px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
+        <h2 style="margin: 0;">Sales KPIs</h2>
+        <span style="margin-left: 15px; color: var(--text-secondary); font-size: 0.9em;">All Products & Branches</span>
+    </div>
+
+    <!-- ROW 1: NEW PRODUCT SALES -->
+    <div class="grid" style="margin-bottom: 30px;">
+        <!-- Angles -->
+        <div class="card">
+            <div style="display:flex; justify-content:space-between;">
+                <h3 style="color: var(--text-secondary);">Angles</h3>
+                <span>📦</span>
+            </div>
+            <div class="big-number">
+                {{ "{:,.3f}".format(sales.angles_sales) if sales else "0.000" }} 
+                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
+            </div>
+        </div>
+
+        <!-- Flats -->
+        <div class="card">
+            <div style="display:flex; justify-content:space-between;">
+                <h3 style="color: var(--text-secondary);">Flats</h3>
+                <span>📦</span>
+            </div>
+            <div class="big-number">
+                {{ "{:,.3f}".format(sales.flats_sales) if sales else "0.000" }} 
+                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
+            </div>
+        </div>
+
+        <!-- Window Sections -->
+        <div class="card">
+            <div style="display:flex; justify-content:space-between;">
+                <h3 style="color: var(--text-secondary);">Window Sections</h3>
+                <span>🪟</span>
+            </div>
+            <div class="big-number">
+                {{ "{:,.3f}".format(sales.window_sections_sales) if sales else "0.000" }} 
+                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
+            </div>
+        </div>
+
+        <!-- Fencing Standard -->
+        <div class="card">
+            <div style="display:flex; justify-content:space-between;">
+                <h3 style="color: var(--text-secondary);">Fencing Standard</h3>
+                <span>🚧</span>
+            </div>
+            <div class="big-number">
+                {{ "{:,.3f}".format(sales.fencing_standard_sales) if sales else "0.000" }} 
+                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
+            </div>
+        </div>
+
+        <!-- Channel Iron -->
+        <div class="card">
+            <div style="display:flex; justify-content:space-between;">
+                <h3 style="color: var(--text-secondary);">Channel Iron</h3>
+                <span>🏗️</span>
+            </div>
+            <div class="big-number">
+                {{ "{:,.3f}".format(sales.channel_iron_sales) if sales else "0.000" }} 
+                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
+            </div>
+        </div>
+        <!-- Other Sections -->
+        <div class="card">
+            <div style="display:flex; justify-content:space-between;">
+                <h3 style="color: var(--text-secondary);">Other Sections</h3>
+                <span>📦</span>
+            </div>
+            <div class="big-number">
+                {{ "{:,.3f}".format(sales.other_sections_sales) if sales else "0.000" }} 
+                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ROW 2: SALES BY BRANCH -->
+    <h3 style="color: var(--text-secondary); font-size: 1em; margin-bottom: 15px;">📍 Sales by Branch</h3>
+    <div class="grid">
+        <!-- Redcliff -->
+        <div class="card">
+            <h3 style="color: var(--text-secondary);">Redcliff</h3>
+            <div class="big-number">
+                {{ "{:,.2f}".format(sales.redcliff_sales) if sales else "0.00" }} 
+                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
+            </div>
+        </div>
+
+        <!-- Harare -->
+        <div class="card">
+            <h3 style="color: var(--text-secondary);">Harare</h3>
+            <div class="big-number">
+                {{ "{:,.2f}".format(sales.harare_sales) if sales else "0.00" }} 
+                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
+            </div>
+        </div>
+
+        <!-- Mutare -->
+        <div class="card">
+            <h3 style="color: var(--text-secondary);">Mutare</h3>
+            <div class="big-number">
+                {{ "{:,.2f}".format(sales.mutare_sales) if sales else "0.00" }} 
+                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="color: var(--text-secondary);">Chiredzi</h3>
+            <div class="big-number">
+                {{ "{:,.2f}".format(sales.chiredzi_sales) if sales else "0.00" }} 
+                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
+            </div>
+        </div>
+
+        <!-- Bulawayo -->
+        <div class="card">
+            <h3 style="color: var(--text-secondary);">Bulawayo</h3>
+            <div class="big-number">
+                {{ "{:,.2f}".format(sales.bulawayo_sales) if sales else "0.00" }} 
+                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- ==========================
+     GAS PLANT KPIs (Consolidated)
+     ========================== -->
+<div style="margin-top: 50px;">
+    <div style="display: flex; align-items: baseline; margin-bottom: 25px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
+        <h2 style="margin: 0;">Gas Plant KPIs</h2>
+    </div>
+
+    <div class="grid">
+        <!-- Industrial Gases -->
+        <div class="card">
+            <div style="display:flex; justify-content:space-between;">
+                <h3 style="color: var(--text-secondary);">Industrial Gases</h3>
+                <span>💨</span>
+            </div>
+            <div class="big-number">
+                {{ "{:,.0f}".format(gas.industrial_gases_cyl) if gas else "0" }} 
+                <span style="font-size:0.5em; color: var(--text-secondary);">Cylinders</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================
+     MAIN SECTION: SCRAP PURCHASE KPIs
+     ========================== -->
+<div style="margin-top: 50px;">
+    <div style="display: flex; align-items: baseline; margin-bottom: 25px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
+        <h2 style="margin: 0;">Scrap Purchase KPIs</h2>
+        <span style="margin-left: 15px; color: var(--text-secondary); font-size: 0.9em;">Raw Materials</span>
+    </div>
+
+    <div class="grid">
+        <!-- Supplied Scrap -->
+        <div class="card">
+            <div style="display:flex; justify-content:space-between;">
+                <h3 style="color: var(--text-secondary);">Supplied Scrap</h3>
+                <span>🚛</span>
+            </div>
+            <div class="big-number">
+                {{ "{:,.3f}".format(scrap.supplied_tns) if scrap else "0.000" }} 
+                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
+            </div>
+        </div>
+
+        <!-- Total Purchased -->
+        <div class="card">
+            <div style="display:flex; justify-content:space-between;">
+                <h3 style="color: var(--text-secondary);">Total Scrap Purchased</h3>
+                <span>♻️</span>
+            </div>
+            <div class="big-number">
+                {{ "{:,.3f}".format(scrap.total_purchased_tns) if scrap else "0.000" }} 
+                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================
+     MAIN SECTION: OPERATIONAL KPIs
+     ========================== -->
+<div style="margin-top: 50px;">
+    <div style="display: flex; align-items: baseline; margin-bottom: 25px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
+        <h2 style="margin: 0;">Operational KPIs</h2>
+        <span style="margin-left: 15px; color: var(--text-secondary); font-size: 0.9em;">Power & Downtime</span>
+    </div>
+
+    <div class="grid">
+        <!-- Power Cut Unit I -->
+        <div class="card">
+            <div style="display:flex; justify-content:space-between;">
+                <h3 style="color: var(--text-secondary);">Power Cut – Unit I</h3>
+                <span>⚡</span>
+            </div>
+            <div class="big-number">
+                {{ ops.u1_hours if ops else 0 }}<span style="font-size:0.7em">h</span> 
+                {{ ops.u1_minutes if ops else 0 }}<span style="font-size:0.7em">m</span>
+            </div>
+            <div class="sub-info">
+                <span>Cumulative downtime</span>
+            </div>
+        </div>
+
+        <!-- Power Cut Unit II -->
+        <div class="card">
+            <div style="display:flex; justify-content:space-between;">
+                <h3 style="color: var(--text-secondary);">Power Cut – Unit II</h3>
+                <span>⚡</span>
+            </div>
+            <div class="big-number">
+                {{ ops.u2_hours if ops else 0 }}<span style="font-size:0.7em">h</span> 
+                {{ ops.u2_minutes if ops else 0 }}<span style="font-size:0.7em">m</span>
+            </div>
+            <div class="sub-info">
+                <span>Cumulative downtime</span>
+            </div>
+        </div>
+    </div>
+</div>
+<a href="{{ url_for('dashboard') }}" class="refresh-fab" id="refreshBtn">
+    <span>↻</span> Refresh Data
+</a>
+
+<!-- 3. JAVASCRIPT FOR SCROLL BEHAVIOR -->
+<script>
+    let isScrolling;
+    const refreshBtn = document.getElementById('refreshBtn');
+
+    window.addEventListener('scroll', function ( event ) {
+        // Clear the timeout while scrolling
+        window.clearTimeout( isScrolling );
+
+        // Add the hidden class (Make it disappear)
+        refreshBtn.classList.add('is-hidden');
+
+        // Set a timeout to run after scrolling ends (e.g., 200ms)
+        isScrolling = setTimeout(function() {
+            // Remove the hidden class (Make it appear)
+            refreshBtn.classList.remove('is-hidden');
+        }, 200);
+
+    }, false);
+</script>
+{% endblock %}
