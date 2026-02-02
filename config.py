@@ -1,27 +1,27 @@
 import os
+from dotenv import load_dotenv
+
+# Load variables from .env file
+load_dotenv()
 
 class Config:
-    SECRET_KEY = 'qwertqweQ#1'
+    # Use the variable from the .env file
+    # If the file isn't found, it defaults to None or the second argument
+    SECRET_KEY = os.environ.get('SECRET_KEY')
     
-    # Database Connection
-    SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://postgres@localhost:5433/OPDB'
+    SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://postgres@localhost:5433/kpi_portal'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    
-     # --- EMAIL SETTINGS (Office 365) ---
     MAIL_SERVER = 'smtp.office365.com'
     MAIL_PORT = 587
     MAIL_USE_TLS = True
     MAIL_USE_SSL = False
-    
     MAIL_USERNAME = 'it@smlzim.com'
-    MAIL_PASSWORD = 'Mponda@J2026'  # (Please change this if it's your real login!)
     
-    # >>> YOU WERE MISSING THIS LINE BELOW <<<
+    # --- HERE IS THE CHANGE ---
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    
     MAIL_DEFAULT_SENDER = 'it@smlzim.com'
+    MAIL_CC = 'upendra.a@smlzim.com, lewis.k@smlzim.com, julius.t@smlzim.com'
     
-    # >>> ADD THIS LINE <<<
-    MAIL_CC = 'upendra.a@smlzim.com, lewis.k@smlzim.com, julius.t@smlzim.com'  # The email you want to CC
-
-    # Scheduler API Enabled
     SCHEDULER_API_ENABLED = True
