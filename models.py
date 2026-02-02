@@ -48,13 +48,10 @@ class ProductionMain(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.Date, default=datetime.utcnow, nullable=False)
     
-    # Billets
-    unit_1_cumulative = db.Column(db.Float, default=0.0)
-    unit_2_cumulative = db.Column(db.Float, default=0.0)
-    
-    # Rolling
-    rolling_non_tmt = db.Column(db.Float, default=0.0)
-    rolling_tmt = db.Column(db.Float, default=0.0)
+    # New Fields
+    sms_tonnage = db.Column(db.Float, default=0.0)
+    rolling_unit_1 = db.Column(db.Float, default=0.0)
+    rolling_unit_2 = db.Column(db.Float, default=0.0)
     
     updated_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -71,15 +68,14 @@ class SalesData(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.Date, default=datetime.utcnow, nullable=False)
     
-    # New Product List
+    # Updated Product List (Fencing Removed)
     angles_sales = db.Column(db.Float, default=0.0)
     flats_sales = db.Column(db.Float, default=0.0)
     window_sections_sales = db.Column(db.Float, default=0.0)
-    fencing_standard_sales = db.Column(db.Float, default=0.0)
     channel_iron_sales = db.Column(db.Float, default=0.0)
-    other_sections_sales = db.Column(db.Float, default=0.0)
+    other_sections_sales = db.Column(db.Float, default=0.0) # Fencing goes here now
     
-    # Branches (Keeping these as they were)
+    # Branches
     redcliff_sales = db.Column(db.Float, default=0.0)
     harare_sales = db.Column(db.Float, default=0.0)
     mutare_sales = db.Column(db.Float, default=0.0)
@@ -117,5 +113,14 @@ class OperationalData(db.Model):
     # Unit 2 Power Cut
     u2_hours = db.Column(db.Integer, default=0)
     u2_minutes = db.Column(db.Integer, default=0)
+    
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class PettyCash(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.Date, default=datetime.utcnow, nullable=False)
+    
+    usd_amount = db.Column(db.Float, default=0.0)
+    zig_amount = db.Column(db.Float, default=0.0)
     
     updated_at = db.Column(db.DateTime, default=datetime.utcnow)

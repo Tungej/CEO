@@ -5,7 +5,7 @@ from flask_mail import Mail, Message
 from flask_apscheduler import APScheduler
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import date, datetime, timedelta
-from models import db, User, DailyBalance, BankInterest, AccountPayables, AccountReceivables, ProductionMain, ProductionSponge, SalesData, GasPlantData, ScrapData, OperationalData
+from models import db, User, DailyBalance, BankInterest, AccountPayables, AccountReceivables, ProductionMain, ProductionSponge, SalesData, GasPlantData, ScrapData, OperationalData, PettyCash
 from config import Config
 
 app = Flask(__name__)
@@ -27,6 +27,21 @@ login_manager.login_view = 'login'
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+@app.template_filter('format_k')
+def format_k(value):
+    try:
+        val = float(value)
+    except:
+        return "0"
+    
+    if val >= 1000000:
+        return f"{val/1000000:.1f}M"
+    elif val >= 1000:
+        return f"{val/1000:.1f}K"
+    else:
+        return f"{val:,.0f}"
+    
 
 # --- CLI Command to Seed ALL Users ---
 @app.cli.command("create-users")
@@ -97,6 +112,12 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    # --- SECURITY CHECK ---
+    # If the user is NOT a viewer (meaning they are an uploader), kick them out.
+    if current_user.role != 'viewer':
+        flash("Access Denied: You do not have permission to view the Dashboard.", "error")
+        return redirect(url_for('upload_data'))
+
     today = date.today()
     
     # 1. Bank Balances
@@ -104,13 +125,33 @@ def dashboard():
     banks = ['CBZ Bank', 'Ecobank', 'Stanbic Bank', 'Nedbank']
     balance_map = {b.bank_name: b for b in balances}
     display_balances = []
+    
+    total_bank_usd = 0.0
+    total_bank_zig = 0.0
+
     for bank in banks:
         entry = balance_map.get(bank)
+        usd = entry.usd_balance if entry else 0.0
+        zig = entry.zig_balance if entry else 0.0
+        
+        # Add to totals
+        total_bank_usd += usd
+        total_bank_zig += zig
+        
         display_balances.append({
             'name': bank,
-            'usd': entry.usd_balance if entry else 0.0,
-            'zig': entry.zig_balance if entry else 0.0
+            'usd': usd,
+            'zig': zig
         })
+
+    # 2. Petty Cash (New)
+    petty = PettyCash.query.order_by(PettyCash.date.desc()).first()
+    petty_usd = petty.usd_amount if petty else 0.0
+    petty_zig = petty.zig_amount if petty else 0.0
+
+    # 3. Grand Total Calculation
+    grand_total_usd = total_bank_usd + petty_usd
+    grand_total_zig = total_bank_zig + petty_zig
 
     # 2. Financial KPIs
     interest = BankInterest.query.order_by(BankInterest.date.desc()).first()
@@ -139,6 +180,10 @@ def dashboard():
     return render_template('dashboard.html', 
                            date=today, 
                            balances=display_balances,
+                           petty_usd=petty_usd,    # <--- NEW
+                           petty_zig=petty_zig,    # <--- NEW
+                           total_usd=grand_total_usd, # <--- NEW
+                           total_zig=grand_total_zig, # <--- NEW
                            interest=int_data,
                            payables=pay_data,
                            receivables=rec_data,
@@ -210,14 +255,25 @@ def upload_data():
                     db.session.add(AccountPayables(date=effective_date, creditors=cred, creditors_project=proj))
 
             # 4. RECEIVABLES
+            # 4. RECEIVABLES + PETTY CASH (Aisha.p)
             elif role == 'uploader_receivables':
+                # Existing Receivables Logic
                 total = float(request.form.get('rec_total', 0))
-                
                 entry = AccountReceivables.query.filter_by(date=effective_date).first()
                 if entry:
                     entry.total_amount = total
                 else:
                     db.session.add(AccountReceivables(date=effective_date, total_amount=total))
+
+                pc_usd = float(request.form.get('pc_usd', 0))
+                pc_zig = float(request.form.get('pc_zig', 0))
+                
+                pc_entry = PettyCash.query.filter_by(date=today).first()
+                if pc_entry:
+                    pc_entry.usd_amount = pc_usd
+                    pc_entry.zig_amount = pc_zig
+                else:
+                    db.session.add(PettyCash(date=today, usd_amount=pc_usd, zig_amount=pc_zig))
 
             # 5. SPONGE IRON
             elif role == 'uploader_sponge':
@@ -232,11 +288,12 @@ def upload_data():
                     db.session.add(ProductionSponge(date=today, produced_tns=produced, lost_tns=lost))
                 
             # 6. SALES KPI
+            # 6. SALES KPI
             elif role == 'uploader_sales':
                 angles = float(request.form.get('angles', 0))
                 flats = float(request.form.get('flats', 0))
                 window = float(request.form.get('window', 0))
-                fencing = float(request.form.get('fencing', 0))
+                # Removed Fencing Input
                 channel = float(request.form.get('channel', 0))
                 other = float(request.form.get('other', 0))
                 
@@ -251,7 +308,7 @@ def upload_data():
                     entry.angles_sales = angles
                     entry.flats_sales = flats
                     entry.window_sections_sales = window
-                    entry.fencing_standard_sales = fencing
+                    # Removed Fencing Update
                     entry.channel_iron_sales = channel
                     entry.other_sections_sales = other
                     entry.redcliff_sales = redcliff
@@ -263,8 +320,10 @@ def upload_data():
                     db.session.add(SalesData(
                         date=today,
                         angles_sales=angles, flats_sales=flats, window_sections_sales=window,
-                        fencing_standard_sales=fencing, channel_iron_sales=channel, other_sections_sales=other,
-                        redcliff_sales=redcliff, harare_sales=harare, mutare_sales=mutare, bulawayo_sales=bulawayo,chiredzi_sales=chiredzi
+                        # Removed Fencing Insert
+                        channel_iron_sales=channel, other_sections_sales=other,
+                        redcliff_sales=redcliff, harare_sales=harare, mutare_sales=mutare, 
+                        bulawayo_sales=bulawayo, chiredzi_sales=chiredzi
                     ))
 
             # 7. SCRAP UPLOADER
@@ -280,21 +339,48 @@ def upload_data():
                     db.session.add(ScrapData(date=today, supplied_tns=supplied, total_purchased_tns=total))
 
             # 8. PLANT MANAGER (Production + Power + Gas)
+            # 8. PLANT MANAGER (Production + Power + Gas)
             elif role == 'uploader_plant':
-                # Production
-                u1 = float(request.form.get('unit1', 0))
-                u2 = float(request.form.get('unit2', 0))
-                non_tmt = float(request.form.get('non_tmt', 0))
-                tmt = float(request.form.get('tmt', 0))
+                # 1. Production (UPDATED)
+                sms = float(request.form.get('sms', 0))
+                r1 = float(request.form.get('rolling1', 0))
+                r2 = float(request.form.get('rolling2', 0))
                 
                 prod_entry = ProductionMain.query.filter_by(date=today).first()
                 if prod_entry:
-                    prod_entry.unit_1_cumulative = u1
-                    prod_entry.unit_2_cumulative = u2
-                    prod_entry.rolling_non_tmt = non_tmt
-                    prod_entry.rolling_tmt = tmt
+                    prod_entry.sms_tonnage = sms
+                    prod_entry.rolling_unit_1 = r1
+                    prod_entry.rolling_unit_2 = r2
                 else:
-                    db.session.add(ProductionMain(date=today, unit_1_cumulative=u1, unit_2_cumulative=u2, rolling_non_tmt=non_tmt, rolling_tmt=tmt))
+                    db.session.add(ProductionMain(
+                        date=today, 
+                        sms_tonnage=sms, 
+                        rolling_unit_1=r1, 
+                        rolling_unit_2=r2
+                    ))
+
+                # 2. Power (Keep as is)
+                u1_h = int(request.form.get('u1_h', 0))
+                u1_m = int(request.form.get('u1_m', 0))
+                u2_h = int(request.form.get('u2_h', 0))
+                u2_m = int(request.form.get('u2_m', 0))
+                
+                ops_entry = OperationalData.query.filter_by(date=today).first()
+                if ops_entry:
+                    ops_entry.u1_hours = u1_h
+                    ops_entry.u1_minutes = u1_m
+                    ops_entry.u2_hours = u2_h
+                    ops_entry.u2_minutes = u2_m
+                else:
+                    db.session.add(OperationalData(date=today, u1_hours=u1_h, u1_minutes=u1_m, u2_hours=u2_h, u2_minutes=u2_m))
+
+                # 3. Gas (Keep as is)
+                gas_cyl = float(request.form.get('ind_gas', 0))
+                gas_entry = GasPlantData.query.filter_by(date=today).first()
+                if gas_entry:
+                    gas_entry.industrial_gases_cyl = gas_cyl
+                else:
+                    db.session.add(GasPlantData(date=today, industrial_gases_cyl=gas_cyl))
 
                 # Power
                 u1_h = int(request.form.get('u1_h', 0))
@@ -362,67 +448,87 @@ def job_reminder():
 
 # Task 2: Overdue Check (Corrected for New Roles)
 # Updated Overdue Check to handle Daily, Weekly, and Monthly
+# ... (Previous code remains the same) ...
+
 @scheduler.task('cron', id='overdue_job', hour=10, minute=0)
 def job_overdue_check():
     with app.app_context():
         today = date.today()
         
         # 1. Calculate Target Dates
-        # For Weekly: Find the Monday of the current week
+        
+        # A. Weekly Target (Last Monday)
         days_since_monday = today.weekday()
         current_monday = today - timedelta(days=days_since_monday)
         
-        # For Monthly: Find the 1st of the current month
+        # B. Monthly Target (1st of Month)
         first_of_month = today.replace(day=1)
+
+        # C. Scrap Target (3-Day Window)
+        # We check if data exists for Today, Yesterday, or Day Before
+        three_days_ago = today - timedelta(days=2) 
         
         # 2. Get the Boss
         boss = User.query.filter_by(username='MrUpendra').first()
         
-        # 3. Define Checks with specific Target Dates
+        # 3. Define Checks
+        # We add a 'type' field: 'exact' or 'range'
         checks = [
             # --- DAILY CHECKS (Target: today) ---
-            {'role': 'uploader_balance',     'model': DailyBalance,       'name': 'Daily Bank Balances',        'target': today},
-            {'role': 'uploader_sales',       'model': SalesData,          'name': 'Sales KPIs',                 'target': today},
-            {'role': 'uploader_scrap',       'model': ScrapData,          'name': 'Scrap Purchase KPIs',        'target': today},
-            {'role': 'uploader_sponge',      'model': ProductionSponge,   'name': 'Sponge Iron Production',     'target': today},
-            {'role': 'uploader_plant',       'model': ProductionMain,     'name': 'Billets/Rolling Production', 'target': today},
-            {'role': 'uploader_plant',       'model': OperationalData,    'name': 'Power Outages',              'target': today},
-            {'role': 'uploader_plant',       'model': GasPlantData,       'name': 'Gas Plant Data',             'target': today},
+            {'role': 'uploader_balance',     'model': DailyBalance,       'name': 'Daily Bank Balances',        'target': today,          'type': 'exact'},
+            {'role': 'uploader_sales',       'model': SalesData,          'name': 'Sales KPIs',                 'target': today,          'type': 'exact'},
+            {'role': 'uploader_sponge',      'model': ProductionSponge,   'name': 'Sponge Iron Production',     'target': today,          'type': 'exact'},
+            {'role': 'uploader_plant',       'model': ProductionMain,     'name': 'Billets/Rolling Production', 'target': today,          'type': 'exact'},
+            {'role': 'uploader_plant',       'model': OperationalData,    'name': 'Power Outages',              'target': today,          'type': 'exact'},
+            {'role': 'uploader_plant',       'model': GasPlantData,       'name': 'Gas Plant Data',             'target': today,          'type': 'exact'},
 
             # --- WEEKLY CHECKS (Target: current_monday) ---
-            {'role': 'uploader_payables',    'model': AccountPayables,    'name': 'Account Payables',           'target': current_monday},
-            {'role': 'uploader_receivables', 'model': AccountReceivables, 'name': 'Account Receivables',        'target': current_monday},
+            {'role': 'uploader_payables',    'model': AccountPayables,    'name': 'Account Payables',           'target': current_monday, 'type': 'exact'},
+            {'role': 'uploader_receivables', 'model': AccountReceivables, 'name': 'Account Receivables',        'target': current_monday, 'type': 'exact'},
 
             # --- MONTHLY CHECKS (Target: first_of_month) ---
-            {'role': 'uploader_interest',    'model': BankInterest,       'name': 'Bank Interest',              'target': first_of_month},
+            {'role': 'uploader_interest',    'model': BankInterest,       'name': 'Bank Interest',              'target': first_of_month, 'type': 'exact'},
+
+            # --- SCRAP CHECK (Target: Anytime in last 3 days) ---
+            {'role': 'uploader_scrap',       'model': ScrapData,          'name': 'Scrap Purchase KPIs',        'target': three_days_ago, 'type': 'range'},
         ]
 
         # 4. Loop and Check
         for check in checks:
-            target_date = check['target']
+            data_exists = False
             
-            # Look for entry on the specific target date
-            data_exists = check['model'].query.filter_by(date=target_date).first()
+            # Logic for Exact Date (e.g., Must match Today or specific Monday)
+            if check['type'] == 'exact':
+                data_exists = check['model'].query.filter_by(date=check['target']).first()
             
+            # Logic for Range (e.g., Scrap: Is there data >= 3 days ago?)
+            elif check['type'] == 'range':
+                data_exists = check['model'].query.filter(check['model'].date >= check['target']).first()
+            
+            # If Data is Missing...
             if not data_exists:
                 uploader = User.query.filter_by(role=check['role']).first()
                 if uploader:
-                    print(f"MISSING DATA: {check['name']} (Expected Date: {target_date})")
+                    # Customize message based on type
+                    if check['type'] == 'range':
+                        time_msg = "in the last 3 days"
+                    else:
+                        time_msg = f"for {check['target'].strftime('%A, %d %B %Y')}"
+
+                    print(f"MISSING DATA: {check['name']} (Expected: {time_msg})")
                     
                     # Email Content
                     subject = f"URGENT: {check['name']} Overdue"
-                    body = f"Hello {uploader.username},\n\nYou have not uploaded the {check['name']} for {target_date.strftime('%A, %d %B %Y')}. Please upload it immediately."
+                    body = f"Hello {uploader.username},\n\nYou have not uploaded the {check['name']} {time_msg}. Please upload it immediately."
                     
                     # A. Notify Uploader
                     if uploader.email:
                         send_email(uploader.email, subject, body)
                     
-                    # B. Notify Viewer (Boss)
+                    # B. Notify Boss
                     if boss and boss.email:
-                        boss_body = f"ALERT: {check['name']} Missing\n\nUser: {uploader.username}\nExpected Date: {target_date}"
+                        boss_body = f"ALERT: {check['name']} Missing\n\nUser: {uploader.username}\nReason: No data found {time_msg}."
                         send_email(boss.email, f"ALERT: {check['name']} Missing", boss_body)
-
-
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5001, debug=True, use_reloader=False)

@@ -1,8 +1,8 @@
-"""Added Chiredzi and real users
+"""Removed fencing
 
-Revision ID: abb3dbb5c31b
+Revision ID: 6db3dca79cf8
 Revises: 
-Create Date: 2026-01-31 22:49:11.679248
+Create Date: 2026-02-02 15:38:33.068831
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'abb3dbb5c31b'
+revision = '6db3dca79cf8'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -68,13 +68,20 @@ def upgrade():
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('petty_cash',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('date', sa.Date(), nullable=False),
+    sa.Column('usd_amount', sa.Float(), nullable=True),
+    sa.Column('zig_amount', sa.Float(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('production_main',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('date', sa.Date(), nullable=False),
-    sa.Column('unit_1_cumulative', sa.Float(), nullable=True),
-    sa.Column('unit_2_cumulative', sa.Float(), nullable=True),
-    sa.Column('rolling_non_tmt', sa.Float(), nullable=True),
-    sa.Column('rolling_tmt', sa.Float(), nullable=True),
+    sa.Column('sms_tonnage', sa.Float(), nullable=True),
+    sa.Column('rolling_unit_1', sa.Float(), nullable=True),
+    sa.Column('rolling_unit_2', sa.Float(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
@@ -92,7 +99,6 @@ def upgrade():
     sa.Column('angles_sales', sa.Float(), nullable=True),
     sa.Column('flats_sales', sa.Float(), nullable=True),
     sa.Column('window_sections_sales', sa.Float(), nullable=True),
-    sa.Column('fencing_standard_sales', sa.Float(), nullable=True),
     sa.Column('channel_iron_sales', sa.Float(), nullable=True),
     sa.Column('other_sections_sales', sa.Float(), nullable=True),
     sa.Column('redcliff_sales', sa.Float(), nullable=True),
@@ -131,6 +137,7 @@ def downgrade():
     op.drop_table('sales_data')
     op.drop_table('production_sponge')
     op.drop_table('production_main')
+    op.drop_table('petty_cash')
     op.drop_table('operational_data')
     op.drop_table('gas_plant_data')
     op.drop_table('daily_balance')

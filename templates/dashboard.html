@@ -2,12 +2,10 @@
 {% block content %}
 <div class="header">
     <div style="display: flex; align-items: center;">
-        <!-- 1. COMPANY LOGO HERE -->
         <img src="{{ url_for('static', filename='logo.png') }}" alt="Company Logo" class="header-logo">
-        
         <div>
             <h1 style="margin: 0; line-height: 1;">Operations Dashboard</h1>
-            <span style="color: var(--text-secondary); font-size: 0.9em;">{{ date.strftime('%A, %B %d, %Y') }}</span>
+            <span style="color: var(--text-secondary); font-size: 0.9em;">{{ date.strftime('%A, %d %B %Y') }}</span>
         </div>
     </div>
     <div>
@@ -17,33 +15,72 @@
 </div>
 
 <!-- ==========================
-     MAIN SECTION: ACCOUNTS KPIs
+     SECTION 1: CASH & BANK (Top Row)
      ========================== -->
 <div style="margin-top: 30px;">
-    <!-- Main Section Header -->
     <div style="display: flex; align-items: baseline; margin-bottom: 25px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
-        <h2 style="margin: 0;">Accounts KPIs</h2>
-        <span style="margin-left: 15px; color: var(--text-secondary); font-size: 0.9em;">Daily / Weekly / Monthly</span>
+        <h2 style="margin: 0;">Daily Cash & Bank Position</h2>
     </div>
 
-    <!-- SUB-SECTION 1: DAILY BANK BALANCES -->
-    <h3 style="color: var(--accent); font-size: 1.1em; margin-bottom: 15px;">Daily Bank Balance</h3>
-    <div class="grid" style="margin-bottom: 40px;">
+    <!-- THIS GRID IS ONLY FOR BANKS + PETTY CASH + TOTAL -->
+    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 50px;">
+        
+        <!-- 1. Banks Loop -->
         {% for bank in balances %}
         <div class="card">
-            <h3>{{ bank.name }}</h3>
-            <div class="big-number">${{ "{:,.2f}".format(bank.usd) }}</div>
-            <div class="sub-info">
-                <span>ZiG Balance</span>
-                <span style="color: white;">Z${{ "{:,.2f}".format(bank.zig) }}</span>
+            <h3 style="color: var(--text-secondary); margin-bottom: 15px;">{{ bank.name }}</h3>
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 10px;">
+                <span style="font-size: 0.9em; color: var(--accent);">USD</span>
+                <span style="font-size: 1.5em; font-weight: bold;">${{ "{:,.0f}".format(bank.usd) }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                <span style="font-size: 0.9em; color: #fbbf24;">ZiG</span>
+                <span style="font-size: 1.5em; font-weight: bold; color: #fbbf24;">{{ bank.zig | format_k }}</span>
             </div>
         </div>
         {% endfor %}
+
+        <!-- 2. Petty Cash -->
+        <div class="card" style="border-left: 4px solid var(--accent);">
+            <h3 style="color: var(--text-secondary); margin-bottom: 15px;">Petty Cash</h3>
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 10px;">
+                <span style="font-size: 0.9em; color: var(--accent);">USD</span>
+                <span style="font-size: 1.5em; font-weight: bold;">${{ "{:,.0f}".format(petty_usd) }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                <span style="font-size: 0.9em; color: #fbbf24;">ZiG</span>
+                <span style="font-size: 1.5em; font-weight: bold; color: #fbbf24;">{{ petty_zig | format_k }}</span>
+            </div>
+        </div>
+
+        <!-- 3. Total Company Cash -->
+        <div class="card" style="background-color: #064e3b; border: 1px solid #10b981;">
+            <h3 style="color: #a7f3d0; margin-bottom: 15px;">Total Company Cash</h3>
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid #059669; padding-bottom: 10px; margin-bottom: 10px;">
+                <span style="font-size: 0.9em; color: #fff;">USD</span>
+                <span style="font-size: 1.8em; font-weight: bold; color: #fff;">${{ "{:,.0f}".format(total_usd) }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                <span style="font-size: 0.9em; color: #fcd34d;">ZiG</span>
+                <span style="font-size: 1.8em; font-weight: bold; color: #fcd34d;">{{ total_zig | format_k }}</span>
+            </div>
+        </div>
+
+    </div> <!-- CLOSING THE BANK GRID HERE IS CRITICAL -->
+</div>
+
+
+<!-- ==========================
+     SECTION 2: FINANCIAL POSITION (Second Row)
+     ========================== -->
+<div style="margin-top: 30px;">
+    <div style="display: flex; align-items: baseline; margin-bottom: 25px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
+        <h2 style="margin: 0;">Financial Position</h2>
+        <span style="margin-left: 15px; color: var(--text-secondary); font-size: 0.9em;">Weekly / Monthly</span>
     </div>
 
-    <!-- SUB-SECTION 2: FINANCIAL POSITION (Interest, Payables, Receivables) -->
-    <h3 style="color: var(--accent); font-size: 1.1em; margin-bottom: 15px;">Financial Position</h3>
-    <div class="grid">
+    <!-- THIS IS A NEW GRID FOR FINANCIAL CARDS -->
+    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
         
         <!-- Interest Card -->
         <div class="card">
@@ -94,6 +131,7 @@
 
     </div>
 </div>
+<!-- ... Rest of Production / Sales KPIs ... -->
 
 <!-- ==========================
      MAIN SECTION: PRODUCTION KPIs
@@ -102,61 +140,48 @@
     <!-- Main Section Header -->
     <div style="display: flex; align-items: baseline; margin-bottom: 25px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
         <h2 style="margin: 0;">Production KPIs</h2>
-        <span style="margin-left: 15px; color: var(--text-secondary); font-size: 0.9em;">Billets & Rolling</span>
+        <span style="margin-left: 15px; color: var(--text-secondary); font-size: 0.9em;">SMS & Rolling</span>
     </div>
 
-    <!-- ROW 1: BILLETS & ROLLING -->
+    <!-- ROW 1 -->
     <div class="grid">
-        <!-- Unit I -->
-        <div class="card">
-            <h3 style="color: var(--text-secondary);">Unit I (Cumulative)</h3>
-            <div class="big-number">
-                {{ "{:,.3f}".format(prod_main.unit_1_cumulative) if prod_main else "0.000" }} 
-                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
-            </div>
-        </div>
-
-        <!-- Unit II -->
-        <div class="card">
-            <h3 style="color: var(--text-secondary);">Unit II (Cumulative)</h3>
-            <div class="big-number">
-                {{ "{:,.3f}".format(prod_main.unit_2_cumulative) if prod_main else "0.000" }} 
-                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
-            </div>
-        </div>
-
-        <!-- Rolling 1 -->
-        <div class="card">
-            <h3 style="color: var(--text-secondary);">Non-TMT / HSD Production</h3>
-            <div class="big-number">
-                {{ "{:,.3f}".format(prod_main.rolling_non_tmt) if prod_main else "0.000" }} 
-                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
-            </div>
-        </div>
-
-        <!-- Rolling 2 -->
-        <div class="card">
-            <h3 style="color: var(--text-secondary);">TMT / Rebar Production</h3>
-            <div class="big-number">
-                {{ "{:,.3f}".format(prod_main.rolling_tmt) if prod_main else "0.000" }} 
-                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- ROW 2: TOTAL BILLETS (Full Width or Split) -->
-    <div class="grid" style="margin-top: 20px;">
-        <div class="card" style="border-left: 4px solid var(--accent);">
+        <!-- SMS Tonnage -->
+        <div class="card" style="border-left: 4px solid #f97316;"> <!-- Orange Accent -->
             <div style="display:flex; justify-content:space-between;">
-                <h3>Total Billets Produced</h3>
+                <h3 style="color: var(--text-secondary);">SMS Tonnage</h3>
                 <span>🏭</span>
             </div>
             <div class="big-number">
-                {{ "{:,.3f}".format(total_billets) }} 
+                {{ "{:,.3f}".format(prod_main.sms_tonnage) if prod_main else "0.000" }} 
+                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
+            </div>
+        </div>
+
+        <!-- Unit 1 Rolling -->
+        <div class="card">
+            <div style="display:flex; justify-content:space-between;">
+                <h3 style="color: var(--text-secondary);">Unit 1 Rolling</h3>
+                <span>⚙️</span>
+            </div>
+            <div class="big-number">
+                {{ "{:,.3f}".format(prod_main.rolling_unit_1) if prod_main else "0.000" }} 
+                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
+            </div>
+        </div>
+
+        <!-- Unit 2 Rolling -->
+        <div class="card">
+            <div style="display:flex; justify-content:space-between;">
+                <h3 style="color: var(--text-secondary);">Unit 2 Rolling</h3>
+                <span>⚙️</span>
+            </div>
+            <div class="big-number">
+                {{ "{:,.3f}".format(prod_main.rolling_unit_2) if prod_main else "0.000" }} 
                 <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
             </div>
         </div>
     </div>
+</div>
 
     <!-- ROW 3: SPONGE IRON -->
     <h3 style="margin-top: 40px; color: var(--text-secondary);">Sponge Iron Production</h3>
@@ -220,18 +245,6 @@
             </div>
             <div class="big-number">
                 {{ "{:,.3f}".format(sales.window_sections_sales) if sales else "0.000" }} 
-                <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
-            </div>
-        </div>
-
-        <!-- Fencing Standard -->
-        <div class="card">
-            <div style="display:flex; justify-content:space-between;">
-                <h3 style="color: var(--text-secondary);">Fencing Standard</h3>
-                <span>🚧</span>
-            </div>
-            <div class="big-number">
-                {{ "{:,.3f}".format(sales.fencing_standard_sales) if sales else "0.000" }} 
                 <span style="font-size:0.5em; color: var(--text-secondary);">Tns</span>
             </div>
         </div>

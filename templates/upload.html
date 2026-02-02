@@ -1,18 +1,24 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="header">
-    <div>
-        <h1>Data Upload Portal</h1>
-        <span style="color: var(--accent);">
-            Reporting Date: {{ date.strftime('%A, %d %B %Y') }}
-        </span>
-        <br>
-        <span style="color: var(--text-secondary); font-size: 0.8em;">
-            (Role: {{ role }})
-        </span>
+    <div style="display: flex; align-items: center;">
+        <!-- 1. COMPANY LOGO -->
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Company Logo" class="header-logo">
+        
+        <div>
+            <h1 style="margin: 0; line-height: 1;">Data Upload Portal</h1>
+            <span style="color: var(--accent); font-size: 0.9em;">
+                Reporting Date: {{ date.strftime('%A, %d %B %Y') }}
+            </span>
+            <br>
+            <span style="color: var(--text-secondary); font-size: 0.8em;">
+                (Role: {{ role }})
+            </span>
+        </div>
     </div>
+    
     <div>
-        <a href="{{ url_for('dashboard') }}" class="nav-link">View Dashboard</a>
+       
         <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
     </div>
 </div>
@@ -73,6 +79,15 @@
             <label>Total Receivables ($)</label>
             <input type="number" step="0.01" name="rec_total" required>
         </div>
+        <!-- NEW: Petty Cash Card -->
+        <div class="card" style="border-left: 4px solid var(--accent);">
+            <h3>Petty Cash (Daily)</h3>
+            <label>USD Amount ($)</label>
+            <input type="number" step="0.01" name="pc_usd" required>
+            
+            <label>ZiG Amount (Z$)</label>
+            <input type="number" step="0.01" name="pc_zig" required>
+        </div>
     </div>
 
     <!-- 5. SPONGE IRON UPLOADER -->
@@ -103,9 +118,6 @@
             
             <label>Window Sections (Tns)</label>
             <input type="number" step="0.001" name="window" required>
-            
-            <label>Fencing Standard (Tns)</label>
-            <input type="number" step="0.001" name="fencing" required>
             
             <label>Channel Iron (Tns)</label>
             <input type="number" step="0.001" name="channel" required>
@@ -147,21 +159,21 @@
     {% elif role == 'uploader_plant' %}
     
     <!-- Section 1: Production -->
+    <!-- Section 1: Production (UPDATED) -->
     <h2 style="border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 20px;">1. Production</h2>
     <div class="grid">
         <div class="card">
-            <h3>Billets (Cumulative)</h3>
-            <label>Unit I (Tns)</label>
-            <input type="number" step="0.001" name="unit1" required>
-            <label>Unit II (Tns)</label>
-            <input type="number" step="0.001" name="unit2" required>
+            <h3>SMS Production</h3>
+            <label>SMS Tonnage (Tns)</label>
+            <input type="number" step="0.001" name="sms" required>
         </div>
         <div class="card">
-            <h3>Rolling</h3>
-            <label>Non-TMT / HSD (Tns)</label>
-            <input type="number" step="0.001" name="non_tmt" required>
-            <label>TMT / Rebar (Tns)</label>
-            <input type="number" step="0.001" name="tmt" required>
+            <h3>Rolling Mills</h3>
+            <label>Unit 1 Rolling (Tns)</label>
+            <input type="number" step="0.001" name="rolling1" required>
+            
+            <label>Unit 2 Rolling (Tns)</label>
+            <input type="number" step="0.001" name="rolling2" required>
         </div>
     </div>
 
