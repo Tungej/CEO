@@ -9,7 +9,7 @@ class Config:
     # If the file isn't found, it defaults to None or the second argument
     SECRET_KEY = os.environ.get('SECRET_KEY')
     
-    SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://postgres@localhost:5433/kpi_portal'
+    SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://postgres@localhost:5432/kpi_portal'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     MAIL_SERVER = 'smtp.office365.com'
