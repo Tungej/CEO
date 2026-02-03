@@ -1,3 +1,9 @@
+import socket
+def getaddrinfo_ipv4(host, port, family=0, type=0, proto=0, flags=0):
+    return original_getaddrinfo(host, port, socket.AF_INET, type, proto, flags)
+
+original_getaddrinfo = socket.getaddrinfo
+socket.getaddrinfo = getaddrinfo_ipv4
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_migrate import Migrate
@@ -55,6 +61,7 @@ def create_users():
         {'user': 'MrUpendra', 'pass': '@upendra2026', 'role': 'viewer', 'email': 'upendra.a@smlzim.com'},
         {'user': 'MrLewis', 'pass': '@lewis#2026', 'role': 'viewer', 'email': 'lewis.k@smlzim.com'},
         {'user': 'MrJulius', 'pass': '@Julius!2026', 'role': 'viewer', 'email': 'julius.t@smlzim.com'},
+        {'user': 'Moses.m', 'pass': '@moses!2026', 'role': 'viewer', 'email': 'moses.m@smlzim.com'},
         {'user': 'Simba.m', 'pass': '@simba$2026', 'role': 'uploader_balance', 'email': 'simba.m@smlzim.com'},
         {'user': 'Edith.d', 'pass': '@edith&2026', 'role': 'uploader_interest', 'email': 'edith.d@smlzim.com'},
         {'user': 'Placcidia.c', 'pass': '@placcidia#26', 'role': 'uploader_payables', 'email': 'placcidia.c@smlzim.com'},
